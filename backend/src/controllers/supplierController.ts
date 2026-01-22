@@ -5,11 +5,18 @@ import { Supplier } from "../models/Supplier";
 import { Purchase } from "../models/Purchase";
 import { PaymentToSupplier } from "../models/PaymentToSupplier";
 
+const emptyStringToUndefined = (value: unknown) => {
+  if (typeof value === "string" && value.trim() === "") {
+    return undefined;
+  }
+  return value;
+};
+
 const supplierSchema = z.object({
   storeId: z.string().uuid().or(z.string().length(24)),
-  name: z.string().min(2),
-  phone: z.string().optional(),
-  email: z.string().email().optional()
+  name: z.string().trim().min(2),
+  phone: z.preprocess(emptyStringToUndefined, z.string().optional()),
+  email: z.preprocess(emptyStringToUndefined, z.string().email().optional())
 });
 
 export const listSuppliers = async (req: AuthedRequest, res: Response) => {
@@ -44,7 +51,10 @@ export const listSuppliers = async (req: AuthedRequest, res: Response) => {
 export const createSupplier = async (req: AuthedRequest, res: Response) => {
   const parsed = supplierSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ message: "Invalid input" });
+    return res.status(400).json({
+      message: "Invalid input",
+      fieldErrors: parsed.error.flatten().fieldErrors
+    });
   }
 
   const supplier = await Supplier.create({

@@ -12,6 +12,15 @@ export class InventoryService {
     items: Array<{ productVariantId: string; quantity: number; unitCost: number }>;
     paidNow: number;
   }) {
+    for (const item of input.items) {
+      if (!Number.isFinite(item.quantity) || item.quantity <= 0) {
+        throw new Error("Purchase item quantity must be greater than zero.");
+      }
+      if (!Number.isFinite(item.unitCost) || item.unitCost <= 0) {
+        throw new Error("Purchase item unit cost must be greater than zero.");
+      }
+    }
+
     const totalCost = input.items.reduce(
       (sum, item) => sum + item.quantity * item.unitCost,
       0

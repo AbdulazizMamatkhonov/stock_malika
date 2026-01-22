@@ -40,6 +40,7 @@ const createEmptyLineItem = (): SaleLineItem => ({
 });
 
 const SalesPage = () => {
+  const { activeStoreId } = useStoreContext();
   const [sales, setSales] = useState<any[]>([]);
   const [products, setProducts] = useState<ProductVariantOption[]>([]);
   const [items, setItems] = useState<SaleLineItem[]>([createEmptyLineItem()]);
@@ -273,6 +274,57 @@ const SalesPage = () => {
           </TableBody>
         </Table>
       </Paper>
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>New sale</DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
+          {items.map((item, index) => (
+            <Box key={`item-${index}`} sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                label="Variant"
+                select
+                fullWidth
+                value={item.productVariantId}
+                onChange={(event) => handleItemChange(index, "productVariantId", event.target.value)}
+              >
+                {variants.map((variant) => (
+                  <MenuItem key={variant._id} value={variant._id}>
+                    {variant.productName} · {variant.name} ({variant.sku})
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                label="Qty"
+                type="number"
+                value={item.quantity}
+                onChange={(event) => handleItemChange(index, "quantity", event.target.value)}
+                sx={{ width: 120 }}
+              />
+              <TextField
+                label="Unit price"
+                type="number"
+                value={item.unitPrice}
+                onChange={(event) => handleItemChange(index, "unitPrice", event.target.value)}
+                sx={{ width: 160 }}
+              />
+              <IconButton onClick={() => removeItem(index)} disabled={items.length === 1}>
+                <DeleteIcon />
+              </IconButton>
+            </Box>
+          ))}
+          <Button onClick={addItem}>Add item</Button>
+          <Typography variant="subtitle2">Total revenue: ${totalRevenue.toFixed(2)}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleCreate}
+            disabled={saving || items.some((item) => !item.productVariantId)}
+          >
+            {saving ? "Saving..." : "Save"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
