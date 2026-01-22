@@ -59,3 +59,16 @@ paths:
       responses:
         "201":
           description: Created
+  /inventory:
+    get:
+      summary: List inventory
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: storeId
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK

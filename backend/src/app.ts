@@ -14,6 +14,7 @@ import { listPurchases, createPurchase } from "./controllers/purchaseController"
 import { listSales, createSale } from "./controllers/saleController";
 import { listExpenses, createExpense } from "./controllers/expenseController";
 import { salesSummary } from "./controllers/reportController";
+import { listInventory } from "./controllers/inventoryController";
 import { requireAuth, requireRole } from "./middleware/auth";
 import { subscriptionGate } from "./middleware/subscription";
 
@@ -80,6 +81,8 @@ export const createApp = () => {
 
   app.get("/expenses", listExpenses);
   app.post("/expenses", requireRole(["OWNER", "MANAGER"]), createExpense);
+
+  app.get("/inventory", listInventory);
 
   app.get("/reports/sales", salesSummary);
 
