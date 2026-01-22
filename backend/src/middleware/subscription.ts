@@ -1,6 +1,6 @@
 import { NextFunction, Response } from "express";
-import { prisma } from "../lib/prisma";
 import { AuthedRequest } from "./auth";
+import { Tenant } from "../models/Tenant";
 
 const writeMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
@@ -13,18 +13,14 @@ export const subscriptionGate = async (
     return next();
   }
 
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: req.user.tenantId }
-  });
-
+  const tenant = await Tenant.findById(req.user.tenantId).lean();
   if (!tenant) {
     return res.status(404).json({ message: "Tenant not found" });
   }
 
   const isActive =
     tenant.subscriptionStatus === "ACTIVE" &&
-    (!tenant.subscriptionExpiresAt ||
-      tenant.subscriptionExpiresAt > new Date());
+    (!tenant.subscriptionExpiresAt || tenant.subscriptionExpiresAt > new Date());
 
   if (!isActive) {
     return res

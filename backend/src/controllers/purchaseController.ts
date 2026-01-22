@@ -1,17 +1,18 @@
 import { Response } from "express";
 import { z } from "zod";
-import { prisma } from "../lib/prisma";
 import { AuthedRequest } from "../middleware/auth";
 import { InventoryService } from "../services/inventoryService";
+import { Purchase } from "../models/Purchase";
+import { AuditLog } from "../models/AuditLog";
 
 const purchaseSchema = z.object({
-  storeId: z.string().uuid(),
-  supplierId: z.string().uuid(),
+  storeId: z.string().uuid().or(z.string().length(24)),
+  supplierId: z.string().uuid().or(z.string().length(24)),
   paidNow: z.number().nonnegative(),
   items: z
     .array(
       z.object({
-        productVariantId: z.string().uuid(),
+        productVariantId: z.string().uuid().or(z.string().length(24)),
         quantity: z.number().int().positive(),
         unitCost: z.number().positive()
       })
@@ -20,11 +21,9 @@ const purchaseSchema = z.object({
 });
 
 export const listPurchases = async (req: AuthedRequest, res: Response) => {
-  const purchases = await prisma.purchase.findMany({
-    where: { tenantId: req.user?.tenantId },
-    include: { items: true, supplier: true },
-    orderBy: { createdAt: "desc" }
-  });
+  const purchases = await Purchase.find({ tenantId: req.user?.tenantId })
+    .sort({ createdAt: -1 })
+    .lean();
   return res.json(purchases);
 };
 
@@ -34,7 +33,7 @@ export const createPurchase = async (req: AuthedRequest, res: Response) => {
     return res.status(400).json({ message: "Invalid input" });
   }
 
-  const service = new InventoryService(prisma);
+  const service = new InventoryService();
   const purchase = await service.createPurchase({
     tenantId: req.user?.tenantId as string,
     storeId: parsed.data.storeId,
@@ -43,13 +42,11 @@ export const createPurchase = async (req: AuthedRequest, res: Response) => {
     paidNow: parsed.data.paidNow
   });
 
-  await prisma.auditLog.create({
-    data: {
-      tenantId: req.user?.tenantId,
-      userId: req.user?.id,
-      action: "PURCHASE_CREATED",
-      metadata: { purchaseId: purchase.id }
-    }
+  await AuditLog.create({
+    tenantId: req.user?.tenantId,
+    userId: req.user?.id,
+    action: "PURCHASE_CREATED",
+    metadata: { purchaseId: purchase._id }
   });
 
   return res.status(201).json(purchase);

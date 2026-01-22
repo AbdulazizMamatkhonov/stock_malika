@@ -9,12 +9,14 @@ export const loginSchema = z.object({
   password: z.string().min(8)
 });
 
+const idSchema = z.string().uuid().or(z.string().length(24));
+
 export const createSaleSchema = z.object({
-  storeId: z.string().uuid(),
+  storeId: idSchema,
   items: z
     .array(
       z.object({
-        productVariantId: z.string().uuid(),
+        productVariantId: idSchema,
         quantity: z.number().positive(),
         unitPrice: z.number().nonnegative()
       })

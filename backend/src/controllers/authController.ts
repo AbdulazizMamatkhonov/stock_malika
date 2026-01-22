@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import { prisma } from "../lib/prisma";
 import {
   signAccessToken,
   signRefreshToken,
   verifyRefreshToken
 } from "../lib/auth";
 import { loginSchema } from "@shop/shared";
+import { User } from "../models/User";
 
 export const login = async (req: Request, res: Response) => {
   const parsed = loginSchema.safeParse(req.body);
@@ -15,7 +15,7 @@ export const login = async (req: Request, res: Response) => {
   }
   const { email, password } = parsed.data;
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await User.findOne({ email }).lean();
   if (!user) {
     return res.status(401).json({ message: "Invalid credentials" });
   }
@@ -26,13 +26,13 @@ export const login = async (req: Request, res: Response) => {
   }
 
   const accessToken = signAccessToken({
-    sub: user.id,
-    tenantId: user.tenantId || undefined,
+    sub: user._id.toString(),
+    tenantId: user.tenantId?.toString(),
     role: user.role
   });
   const refreshToken = signRefreshToken({
-    sub: user.id,
-    tenantId: user.tenantId || undefined,
+    sub: user._id.toString(),
+    tenantId: user.tenantId?.toString(),
     role: user.role
   });
 

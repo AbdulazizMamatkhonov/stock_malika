@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
-import { prisma } from "../lib/prisma";
 import { AuthedRequest } from "../middleware/auth";
 import { z } from "zod";
+import { Tenant } from "../models/Tenant";
+import { AuditLog } from "../models/AuditLog";
 
 const tenantSchema = z.object({
   name: z.string().min(2),
@@ -11,9 +12,7 @@ const tenantSchema = z.object({
 });
 
 export const listTenants = async (_req: Request, res: Response) => {
-  const tenants = await prisma.tenant.findMany({
-    orderBy: { createdAt: "desc" }
-  });
+  const tenants = await Tenant.find().sort({ createdAt: -1 }).lean();
   return res.json(tenants);
 };
 
@@ -23,24 +22,20 @@ export const createTenant = async (req: AuthedRequest, res: Response) => {
     return res.status(400).json({ message: "Invalid input" });
   }
 
-  const tenant = await prisma.tenant.create({
-    data: {
-      name: parsed.data.name,
-      plan: parsed.data.plan || "TRIAL",
-      subscriptionStatus: parsed.data.subscriptionStatus || "ACTIVE",
-      subscriptionExpiresAt: parsed.data.subscriptionExpiresAt
-        ? new Date(parsed.data.subscriptionExpiresAt)
-        : null
-    }
+  const tenant = await Tenant.create({
+    name: parsed.data.name,
+    plan: parsed.data.plan || "TRIAL",
+    subscriptionStatus: parsed.data.subscriptionStatus || "ACTIVE",
+    subscriptionExpiresAt: parsed.data.subscriptionExpiresAt
+      ? new Date(parsed.data.subscriptionExpiresAt)
+      : undefined
   });
 
-  await prisma.auditLog.create({
-    data: {
-      tenantId: tenant.id,
-      userId: req.user?.id,
-      action: "STORE_CREATED",
-      metadata: { createdByMaster: true }
-    }
+  await AuditLog.create({
+    tenantId: tenant._id,
+    userId: req.user?.id,
+    action: "STORE_CREATED",
+    metadata: { createdByMaster: true }
   });
 
   return res.status(201).json(tenant);
@@ -52,15 +47,16 @@ export const updateTenant = async (req: Request, res: Response) => {
     return res.status(400).json({ message: "Invalid input" });
   }
 
-  const tenant = await prisma.tenant.update({
-    where: { id: req.params.tenantId },
-    data: {
+  const tenant = await Tenant.findByIdAndUpdate(
+    req.params.tenantId,
+    {
       ...parsed.data,
       subscriptionExpiresAt: parsed.data.subscriptionExpiresAt
         ? new Date(parsed.data.subscriptionExpiresAt)
         : undefined
-    }
-  });
+    },
+    { new: true }
+  ).lean();
 
   return res.json(tenant);
 };

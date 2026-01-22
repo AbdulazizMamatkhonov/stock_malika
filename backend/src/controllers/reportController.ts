@@ -1,6 +1,24 @@
 import { Response } from "express";
-import { prisma } from "../lib/prisma";
 import { AuthedRequest } from "../middleware/auth";
+import { Sale } from "../models/Sale";
+import { Expense } from "../models/Expense";
+
+const buildMatch = (tenantId: string, query: { startDate?: string; endDate?: string; storeId?: string }) => {
+  const match: Record<string, unknown> = { tenantId };
+  if (query.storeId) {
+    match.storeId = query.storeId;
+  }
+  if (query.startDate || query.endDate) {
+    match.createdAt = {};
+    if (query.startDate) {
+      (match.createdAt as Record<string, Date>).$gte = new Date(query.startDate);
+    }
+    if (query.endDate) {
+      (match.createdAt as Record<string, Date>).$lte = new Date(query.endDate);
+    }
+  }
+  return match;
+};
 
 export const salesSummary = async (req: AuthedRequest, res: Response) => {
   const { startDate, endDate, storeId } = req.query as {
@@ -10,57 +28,51 @@ export const salesSummary = async (req: AuthedRequest, res: Response) => {
   };
 
   const tenantId = req.user?.tenantId as string;
+  const match = buildMatch(tenantId, { startDate, endDate, storeId });
 
-  const filters: string[] = ["\"tenantId\" = $1"];
-  const values: Array<string | Date> = [tenantId];
+  const revenueRows = await Sale.aggregate([
+    { $match: match },
+    {
+      $group: {
+        _id: {
+          $dateTrunc: { date: "$createdAt", unit: "day" }
+        },
+        revenue: { $sum: "$totalRevenue" },
+        cogs: { $sum: "$totalCogs" },
+        salesCount: { $sum: 1 }
+      }
+    },
+    { $sort: { _id: 1 } },
+    {
+      $project: {
+        _id: 0,
+        day: "$_id",
+        revenue: 1,
+        cogs: 1,
+        salesCount: 1
+      }
+    }
+  ]);
 
-  if (storeId) {
-    filters.push(`\"storeId\" = $${values.length + 1}`);
-    values.push(storeId);
-  }
-
-  if (startDate) {
-    filters.push(`\"createdAt\" >= $${values.length + 1}`);
-    values.push(new Date(startDate));
-  }
-
-  if (endDate) {
-    filters.push(`\"createdAt\" <= $${values.length + 1}`);
-    values.push(new Date(endDate));
-  }
-
-  const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
-
-  const revenueRows = await prisma.$queryRawUnsafe<
-    Array<{
-      day: string;
-      revenue: number;
-      cogs: number;
-      salesCount: number;
-    }>
-  >(
-    `SELECT DATE_TRUNC('day', "createdAt") AS day,
-        SUM("totalRevenue")::float AS revenue,
-        SUM("totalCogs")::float AS cogs,
-        COUNT(*)::int AS "salesCount"
-      FROM "Sale"
-      ${whereClause}
-      GROUP BY day
-      ORDER BY day ASC`,
-    ...values
-  );
-
-  const expenseRows = await prisma.$queryRawUnsafe<
-    Array<{ day: string; expenses: number }>
-  >(
-    `SELECT DATE_TRUNC('day', "createdAt") AS day,
-        SUM("amount")::float AS expenses
-      FROM "Expense"
-      ${whereClause}
-      GROUP BY day
-      ORDER BY day ASC`,
-    ...values
-  );
+  const expenseRows = await Expense.aggregate([
+    { $match: match },
+    {
+      $group: {
+        _id: {
+          $dateTrunc: { date: "$createdAt", unit: "day" }
+        },
+        expenses: { $sum: "$amount" }
+      }
+    },
+    { $sort: { _id: 1 } },
+    {
+      $project: {
+        _id: 0,
+        day: "$_id",
+        expenses: 1
+      }
+    }
+  ]);
 
   return res.json({ revenueRows, expenseRows });
 };

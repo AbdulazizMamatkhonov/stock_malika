@@ -1,10 +1,10 @@
 # Shop Sales & Inventory
 
-Production-ready multi-tenant sales + inventory platform with React, Express, Prisma, and PostgreSQL.
+Production-ready multi-tenant sales + inventory platform with React, Express, MongoDB (Mongoose), and PostgreSQL-ready architecture.
 
 ## Repo Structure
 
-- `backend` – Express API, Prisma schema, migrations, tests
+- `backend` – Express API, Mongoose models, tests
 - `frontend` – React + MUI dashboard
 - `shared` – shared types + validation schemas
 
@@ -19,7 +19,7 @@ Production-ready multi-tenant sales + inventory platform with React, Express, Pr
 
 ## Local Setup
 
-### 1) Start Postgres
+### 1) Start MongoDB
 
 ```bash
 docker-compose up -d
@@ -31,9 +31,7 @@ docker-compose up -d
 cd backend
 cp .env.example .env
 npm install
-npm run prisma:generate
-npm run prisma:migrate
-npm run prisma:seed
+npm run seed
 npm run dev
 ```
 
@@ -77,4 +75,4 @@ curl -X POST http://localhost:4000/sales \
 
 - Subscription gating blocks writes when status is not `ACTIVE`.
 - Store-level inventory is isolated; shared catalog is enabled by default.
-- Use the migration SQL in `backend/prisma/migrations` for initial schema.
+- MongoDB is the primary database; Mongoose models live in `backend/src/models`.
