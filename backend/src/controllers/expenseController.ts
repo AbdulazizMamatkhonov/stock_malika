@@ -6,12 +6,26 @@ import { AuditLog } from "../models/AuditLog";
 
 const expenseSchema = z.object({
   storeId: z.string().uuid().or(z.string().length(24)).optional(),
-  description: z.string().min(3),
-  amount: z.number().positive()
+  description: z.string().trim().min(3),
+  amount: z.preprocess((value) => Number(value), z.number().positive())
+});
+
+const expenseQuerySchema = z.object({
+  storeId: z.string().uuid().or(z.string().length(24)).optional()
 });
 
 export const listExpenses = async (req: AuthedRequest, res: Response) => {
-  const expenses = await Expense.find({ tenantId: req.user?.tenantId })
+  const parsed = expenseQuerySchema.safeParse(req.query);
+  if (!parsed.success) {
+    return res.status(400).json({ message: "Invalid input" });
+  }
+
+  const filters: Record<string, string | undefined> = { tenantId: req.user?.tenantId };
+  if (parsed.data.storeId) {
+    filters.storeId = parsed.data.storeId;
+  }
+
+  const expenses = await Expense.find(filters)
     .sort({ createdAt: -1 })
     .lean();
   return res.json(expenses);
