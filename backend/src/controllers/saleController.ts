@@ -15,7 +15,31 @@ export const listSales = async (req: AuthedRequest, res: Response) => {
 export const createSale = async (req: AuthedRequest, res: Response) => {
   const parsed = createSaleSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({ message: "Invalid input" });
+    return res.status(400).json({
+      message: "Invalid sale input",
+      errors: parsed.error.flatten().fieldErrors
+    });
+  }
+
+  const validationErrors: string[] = [];
+  if (!parsed.data.storeId) {
+    validationErrors.push("storeId is required");
+  }
+
+  parsed.data.items.forEach((item, index) => {
+    if (!Number.isFinite(item.quantity) || item.quantity <= 0) {
+      validationErrors.push(`Item ${index + 1} has invalid quantity`);
+    }
+    if (!Number.isFinite(item.unitPrice) || item.unitPrice < 0) {
+      validationErrors.push(`Item ${index + 1} has invalid unit price`);
+    }
+  });
+
+  if (validationErrors.length > 0) {
+    return res.status(400).json({
+      message: "Invalid sale input",
+      errors: validationErrors
+    });
   }
 
   const service = new InventoryService();

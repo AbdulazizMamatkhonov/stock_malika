@@ -1,5 +1,6 @@
 import { Types, startSession } from "mongoose";
 import { InventoryLot } from "../models/InventoryLot";
+import { ProductVariant } from "../models/ProductVariant";
 import { Purchase } from "../models/Purchase";
 import { Sale } from "../models/Sale";
 
@@ -113,7 +114,18 @@ export class InventoryService {
         );
 
         if (available < remaining) {
-          throw new Error("Insufficient stock for sale item.");
+          const variant = await ProductVariant.findOne({
+            _id: item.productVariantId,
+            tenantId: input.tenantId
+          })
+            .lean()
+            .session(session);
+          const descriptor = variant
+            ? `${variant.name}${variant.sku ? ` (SKU ${variant.sku})` : ""}`
+            : `item ${item.productVariantId}`;
+          throw new Error(
+            `Insufficient stock for ${descriptor}. Requested ${item.quantity}, available ${available}.`
+          );
         }
 
         for (const lot of lots) {

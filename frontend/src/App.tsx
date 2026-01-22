@@ -4,6 +4,7 @@ import LoginPage from "./pages/LoginPage";
 import TenantDashboard from "./pages/TenantDashboard";
 import ProductsPage from "./pages/ProductsPage";
 import InventoryPage from "./pages/InventoryPage";
+import ProductsPage from "./pages/ProductsPage";
 import SuppliersPage from "./pages/SuppliersPage";
 import PurchasesPage from "./pages/PurchasesPage";
 import SalesPage from "./pages/SalesPage";
@@ -44,6 +45,16 @@ const App = () => (
             <Protected>
               <AppLayout>
                 <TenantDashboard />
+              </AppLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/products"
+          element={
+            <Protected>
+              <AppLayout>
+                <ProductsPage />
               </AppLayout>
             </Protected>
           }
