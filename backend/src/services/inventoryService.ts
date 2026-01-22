@@ -1,5 +1,6 @@
 import { Types, startSession } from "mongoose";
 import { InventoryLot } from "../models/InventoryLot";
+import { ProductVariant } from "../models/ProductVariant";
 import { Purchase } from "../models/Purchase";
 import { Sale } from "../models/Sale";
 
@@ -11,6 +12,15 @@ export class InventoryService {
     items: Array<{ productVariantId: string; quantity: number; unitCost: number }>;
     paidNow: number;
   }) {
+    for (const item of input.items) {
+      if (!Number.isFinite(item.quantity) || item.quantity <= 0) {
+        throw new Error("Purchase item quantity must be greater than zero.");
+      }
+      if (!Number.isFinite(item.unitCost) || item.unitCost <= 0) {
+        throw new Error("Purchase item unit cost must be greater than zero.");
+      }
+    }
+
     const totalCost = input.items.reduce(
       (sum, item) => sum + item.quantity * item.unitCost,
       0
@@ -104,7 +114,18 @@ export class InventoryService {
         );
 
         if (available < remaining) {
-          throw new Error("Insufficient stock for sale item.");
+          const variant = await ProductVariant.findOne({
+            _id: item.productVariantId,
+            tenantId: input.tenantId
+          })
+            .lean()
+            .session(session);
+          const descriptor = variant
+            ? `${variant.name}${variant.sku ? ` (SKU ${variant.sku})` : ""}`
+            : `item ${item.productVariantId}`;
+          throw new Error(
+            `Insufficient stock for ${descriptor}. Requested ${item.quantity}, available ${available}.`
+          );
         }
 
         for (const lot of lots) {
