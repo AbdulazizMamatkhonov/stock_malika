@@ -8,7 +8,15 @@ import { login, refresh, logout } from "./controllers/authController";
 import { listTenants, createTenant, updateTenant } from "./controllers/tenantController";
 import { listStores, createStore } from "./controllers/storeController";
 import { listUsers, createUser } from "./controllers/userController";
-import { listProducts, createProduct } from "./controllers/productController";
+import {
+  listProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  createVariant,
+  updateVariant,
+  deleteVariant
+} from "./controllers/productController";
 import { listSuppliers, createSupplier, supplierHistory } from "./controllers/supplierController";
 import { listPurchases, createPurchase } from "./controllers/purchaseController";
 import { listSales, createSale } from "./controllers/saleController";
@@ -64,6 +72,23 @@ export const createApp = () => {
 
   app.get("/products", listProducts);
   app.post("/products", requireRole(["OWNER", "MANAGER"]), createProduct);
+  app.patch("/products/:productId", requireRole(["OWNER", "MANAGER"]), updateProduct);
+  app.delete("/products/:productId", requireRole(["OWNER", "MANAGER"]), deleteProduct);
+  app.post(
+    "/products/:productId/variants",
+    requireRole(["OWNER", "MANAGER"]),
+    createVariant
+  );
+  app.patch(
+    "/products/:productId/variants/:variantId",
+    requireRole(["OWNER", "MANAGER"]),
+    updateVariant
+  );
+  app.delete(
+    "/products/:productId/variants/:variantId",
+    requireRole(["OWNER", "MANAGER"]),
+    deleteVariant
+  );
 
   app.get("/suppliers", listSuppliers);
   app.post("/suppliers", requireRole(["OWNER", "MANAGER"]), createSupplier);
