@@ -373,6 +373,75 @@ const PurchasesPage = () => {
           </TableBody>
         </Table>
       </Paper>
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>New purchase</DialogTitle>
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2 }}>
+          <TextField
+            label="Supplier"
+            select
+            value={supplierId}
+            onChange={(event) => setSupplierId(event.target.value)}
+          >
+            {suppliers.map((supplier) => (
+              <MenuItem key={supplier._id} value={supplier._id}>
+                {supplier.name}
+              </MenuItem>
+            ))}
+          </TextField>
+          {items.map((item, index) => (
+            <Box key={`item-${index}`} sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                label="Variant"
+                select
+                fullWidth
+                value={item.productVariantId}
+                onChange={(event) => handleItemChange(index, "productVariantId", event.target.value)}
+              >
+                {variants.map((variant) => (
+                  <MenuItem key={variant._id} value={variant._id}>
+                    {variant.productName} · {variant.name} ({variant.sku})
+                  </MenuItem>
+                ))}
+              </TextField>
+              <TextField
+                label="Qty"
+                type="number"
+                value={item.quantity}
+                onChange={(event) => handleItemChange(index, "quantity", event.target.value)}
+                sx={{ width: 120 }}
+              />
+              <TextField
+                label="Unit cost"
+                type="number"
+                value={item.unitCost}
+                onChange={(event) => handleItemChange(index, "unitCost", event.target.value)}
+                sx={{ width: 160 }}
+              />
+              <IconButton onClick={() => removeItem(index)} disabled={items.length === 1}>
+                <DeleteIcon />
+              </IconButton>
+            </Box>
+          ))}
+          <Button onClick={addItem}>Add item</Button>
+          <TextField
+            label="Paid now"
+            type="number"
+            value={paidNow}
+            onChange={(event) => setPaidNow(Number(event.target.value))}
+          />
+          <Typography variant="subtitle2">Total cost: ${totalCost.toFixed(2)}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpen(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={handleCreate}
+            disabled={saving || !supplierId || items.some((item) => !item.productVariantId)}
+          >
+            {saving ? "Saving..." : "Save"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
