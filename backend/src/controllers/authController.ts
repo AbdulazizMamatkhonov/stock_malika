@@ -5,7 +5,7 @@ import {
   signRefreshToken,
   verifyRefreshToken
 } from "../lib/auth";
-import { loginSchema } from "@shop/shared";
+import { loginSchema } from "../../shared/src";
 import { User } from "../models/User";
 
 export const login = async (req: Request, res: Response) => {
