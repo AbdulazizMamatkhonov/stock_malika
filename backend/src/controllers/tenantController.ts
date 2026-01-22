@@ -60,3 +60,16 @@ export const updateTenant = async (req: Request, res: Response) => {
 
   return res.json(tenant);
 };
+
+export const getMyTenant = async (req: AuthedRequest, res: Response) => {
+  if (!req.user?.tenantId) {
+    return res.status(404).json({ message: "Tenant not found" });
+  }
+
+  const tenant = await Tenant.findById(req.user.tenantId).lean();
+  if (!tenant) {
+    return res.status(404).json({ message: "Tenant not found" });
+  }
+
+  return res.json(tenant);
+};

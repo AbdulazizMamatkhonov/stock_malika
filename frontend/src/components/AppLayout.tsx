@@ -1,7 +1,9 @@
 import { ReactNode, useEffect } from "react";
 import {
   AppBar,
+  Alert,
   Box,
+  Button,
   Divider,
   Drawer,
   List,
@@ -15,6 +17,7 @@ import {
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../lib/api";
 import { useStoreContext } from "../lib/storeContext";
+import { useSubscriptionContext } from "../lib/subscriptionContext";
 
 const drawerWidth = 240;
 
@@ -32,6 +35,9 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { stores, setStores, activeStoreId, setActiveStoreId } = useStoreContext();
+  const { tenant, isReadOnly } = useSubscriptionContext();
+
+  const showSubscriptionBanner = tenant?.subscriptionStatus === "PAST_DUE" || tenant?.subscriptionStatus === "CANCELED";
 
   useEffect(() => {
     const loadStores = async () => {
@@ -105,7 +111,27 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
             </ListItemButton>
           </Toolbar>
         </AppBar>
-        <Box sx={{ p: 3 }}>{children}</Box>
+        <Box sx={{ p: 3 }}>
+          {showSubscriptionBanner ? (
+            <Alert
+              severity="warning"
+              sx={{ mb: 3 }}
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  href="mailto:support@shopops.com?subject=Subscription%20renewal"
+                >
+                  Contact support
+                </Button>
+              }
+            >
+              Your subscription is {tenant?.subscriptionStatus === "PAST_DUE" ? "past due" : "canceled"}. Create actions
+              are disabled until the subscription is renewed.
+            </Alert>
+          ) : null}
+          <Box sx={{ opacity: isReadOnly ? 0.95 : 1 }}>{children}</Box>
+        </Box>
       </Box>
     </Box>
   );

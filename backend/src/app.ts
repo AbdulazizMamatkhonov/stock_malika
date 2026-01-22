@@ -5,7 +5,7 @@ import rateLimit from "express-rate-limit";
 import swaggerUi from "swagger-ui-express";
 import path from "path";
 import { login, refresh, logout } from "./controllers/authController";
-import { listTenants, createTenant, updateTenant } from "./controllers/tenantController";
+import { listTenants, createTenant, updateTenant, getMyTenant } from "./controllers/tenantController";
 import { listStores, createStore } from "./controllers/storeController";
 import { listUsers, createUser } from "./controllers/userController";
 import { listProducts, createProduct } from "./controllers/productController";
@@ -51,6 +51,8 @@ export const createApp = () => {
 
   app.use(requireAuth);
   app.use(subscriptionGate);
+
+  app.get("/me/tenant", getMyTenant);
 
   app.get("/tenants", requireRole(["MASTER"]), listTenants);
   app.post("/tenants", requireRole(["MASTER"]), createTenant);

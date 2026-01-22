@@ -1,5 +1,6 @@
 import { Box, Button, Chip, Grid, Paper, Typography } from "@mui/material";
 import PageLayout from "../components/PageLayout";
+import CreateActionButton from "../components/CreateActionButton";
 
 const tenants = [
   { id: "t-1", name: "Demo Tenant", plan: "TRIAL", status: "ACTIVE" },
@@ -9,7 +10,7 @@ const tenants = [
 const MasterAdminPage = () => (
   <PageLayout
     title="Master Admin"
-    actions={<Button variant="contained">Create Tenant</Button>}
+    actions={<CreateActionButton variant="contained">Create Tenant</CreateActionButton>}
   >
     <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
       Tenants
