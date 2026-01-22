@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { AuthedRequest } from "../middleware/auth";
 import { InventoryService } from "../services/inventoryService";
-import { createSaleSchema } from "../../shared/src";
+import { createSaleSchema } from "../../../shared/src";
 import { Sale } from "../models/Sale";
 import { AuditLog } from "../models/AuditLog";
 
