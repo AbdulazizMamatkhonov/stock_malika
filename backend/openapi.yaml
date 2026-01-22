@@ -1,0 +1,61 @@
+openapi: 3.0.3
+info:
+  title: Shop Sales & Inventory API
+  version: 1.0.0
+servers:
+  - url: http://localhost:4000
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+paths:
+  /auth/login:
+    post:
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: OK
+  /tenants:
+    get:
+      summary: List tenants
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: OK
+    post:
+      summary: Create tenant
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Created
+  /sales:
+    post:
+      summary: Create sale
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Created
+  /purchases:
+    post:
+      summary: Create purchase
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Created
