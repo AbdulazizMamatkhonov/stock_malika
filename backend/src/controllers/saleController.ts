@@ -18,7 +18,7 @@ export const createSale = async (req: AuthedRequest, res: Response) => {
     return res.status(400).json({ message: "Invalid input" });
   }
 
-  const service = new InventoryService();
+const service = new InventoryService();
   try {
     const sale = await service.createSale({
       tenantId: req.user?.tenantId as string,
@@ -26,7 +26,7 @@ export const createSale = async (req: AuthedRequest, res: Response) => {
       items: parsed.data.items
     });
 
-    await AuditLog.create({
+  await AuditLog.create({
       tenantId: req.user?.tenantId,
       userId: req.user?.id,
       action: "SALE_CREATED",
