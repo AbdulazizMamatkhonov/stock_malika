@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
 import LoginPage from "./pages/LoginPage";
 import TenantDashboard from "./pages/TenantDashboard";
+import ProductsPage from "./pages/ProductsPage";
 import InventoryPage from "./pages/InventoryPage";
 import SuppliersPage from "./pages/SuppliersPage";
 import PurchasesPage from "./pages/PurchasesPage";
@@ -53,6 +54,16 @@ const App = () => (
             <Protected>
               <AppLayout>
                 <InventoryPage />
+              </AppLayout>
+            </Protected>
+          }
+        />
+        <Route
+          path="/products"
+          element={
+            <Protected>
+              <AppLayout>
+                <ProductsPage />
               </AppLayout>
             </Protected>
           }
